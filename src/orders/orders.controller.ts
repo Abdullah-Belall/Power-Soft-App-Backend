@@ -43,7 +43,7 @@ export class OrdersController {
   @UseGuards(CustomerGuard)
   @Get('customer')
   async getCustomerOrders(@User() { id }: TokenInterface) {
-    return await this.ordersService.getCustomerOrders(id);
+    return await this.ordersService.getCustomerOrders(id, 'customer');
   }
 
   @UseGuards(CustomerGuard)
@@ -110,5 +110,10 @@ export class OrdersController {
       order_id,
       changeOrderStatusDto.private_status,
     );
+  }
+  @UseGuards(ManagerGuard)
+  @Get('customer/:id')
+  async getCustomerOrdersForManager(@Param('id') id: string) {
+    return await this.ordersService.getCustomerOrders(id, 'manager');
   }
 }

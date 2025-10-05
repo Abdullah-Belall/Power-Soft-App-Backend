@@ -72,16 +72,29 @@ export class OrdersService {
       done: true,
     };
   }
-  async getCustomerOrders(id: string) {
+  async getCustomerOrders(id: string, type: 'customer' | 'manager') {
     const ordersRepo = this.OrdersDBService.getOrdersRepo();
-    const [orders, total] = await ordersRepo.findAndCount({
-      where: {
-        customer: {
-          id,
-        },
-      },
-      relations: ['status'],
-    });
+    const qb = ordersRepo
+      .createQueryBuilder('order')
+      .leftJoin('order.customer', 'customer')
+      .where('customer.id = :id', { id });
+    if (type === 'manager') {
+      qb.addSelect([
+        'customer.id',
+        'customer.first_name',
+        'customer.last_name',
+        'customer.created_at',
+      ])
+        .leftJoin('order.supporter', 'supporter')
+        .addSelect([
+          'supporter.id',
+          'supporter.first_name',
+          'supporter.last_name',
+        ]);
+    }
+    const [orders, total] = await qb
+      .orderBy('order.created_at', 'DESC')
+      .getManyAndCount();
     return {
       orders,
       total,
